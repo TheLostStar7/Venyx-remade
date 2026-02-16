@@ -1813,6 +1813,67 @@ end
 			SliceCenter = Rect.new(2, 2, 298, 298)
 		}, {
 			utility:Create("ScrollingFrame", {
+function section:addDropdown(title, list, callback)
+	local dropdown = utility:Create("Frame", {
+		Name = "Dropdown",
+		Parent = self.container,
+		BackgroundTransparency = 1,
+		Size = UDim2.new(1, 0, 0, 30),
+		ClipsDescendants = true
+	}, {
+		utility:Create("UIListLayout", {
+			SortOrder = Enum.SortOrder.LayoutOrder,
+			Padding = UDim.new(0, 4)
+		}),
+		utility:Create("ImageLabel", {
+			Name = "Search",
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			Size = UDim2.new(1, 0, 0, 30),
+			ZIndex = 2,
+			Image = "rbxassetid://5028857472",
+			ImageColor3 = themes.DarkContrast,
+			ScaleType = Enum.ScaleType.Slice,
+			SliceCenter = Rect.new(2, 2, 298, 298)
+		}, {
+			utility:Create("TextBox", {
+				Name = "TextBox",
+				AnchorPoint = Vector2.new(0, 0.5),
+				BackgroundTransparency = 1,
+				TextTruncate = Enum.TextTruncate.AtEnd,
+				Position = UDim2.new(0, 10, 0.5, 1),
+				Size = UDim2.new(1, -42, 1, 0),
+				ZIndex = 3,
+				Font = Enum.Font.Gotham,
+				Text = title,
+				TextColor3 = themes.TextColor,
+				TextSize = 12,
+				TextTransparency = 0.1,
+				TextXAlignment = Enum.TextXAlignment.Left
+			}),
+			utility:Create("ImageButton", {
+				Name = "Button",
+				BackgroundTransparency = 1,
+				BorderSizePixel = 0,
+				Position = UDim2.new(1, -28, 0.5, -9),
+				Size = UDim2.new(0, 18, 0, 18),
+				ZIndex = 3,
+				Image = "rbxassetid://5012539403",
+				ImageColor3 = themes.TextColor
+			})
+		}),
+		utility:Create("ImageLabel", {
+			Name = "List",
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			Size = UDim2.new(1, 0, 1, -34),
+			ZIndex = 2,
+			Image = "rbxassetid://5028857472",
+			ImageColor3 = themes.Background,
+			ScaleType = Enum.ScaleType.Slice,
+			SliceCenter = Rect.new(2, 2, 298, 298)
+		}, {
+			utility:Create("ScrollingFrame", {
 				Name = "Frame",
 				Active = true,
 				BackgroundTransparency = 1,
@@ -1832,34 +1893,34 @@ end
 		})
 	})
 
-	table.insert(self.modules, dropdownFrame)
+	table.insert(self.modules, dropdown)
 	self:Resize()
 
-	local object = {}
 	local items = {}
+	list = list or {}
 
 	for _, v in ipairs(list) do
 		table.insert(items, v)
 	end
 
-	function object:Add(value)
+	function dropdown:Add(value)
 		if not table.find(items, value) then
 			table.insert(items, value)
 		end
 	end
 
-	function object:Remove(value)
+	function dropdown:Remove(value)
 		local i = table.find(items, value)
 		if i then
 			table.remove(items, i)
 		end
 	end
 
-	function object:Clear()
+	function dropdown:Clear()
 		table.clear(items)
 	end
 
-	function object:GetAll()
+	function dropdown:GetAll()
 		local copy = {}
 		for i, v in ipairs(items) do
 			copy[i] = v
@@ -1867,8 +1928,42 @@ end
 		return copy
 	end
 
-	return object
-	end
+	local search = dropdown.Search
+	local focused
+
+	search.Button.MouseButton1Click:Connect(function()
+		if search.Button.Rotation == 0 then
+			self:updateDropdown(dropdown, nil, items, callback)
+		else
+			self:updateDropdown(dropdown, nil, nil, callback)
+		end
+	end)
+
+	search.TextBox.Focused:Connect(function()
+		if search.Button.Rotation == 0 then
+			self:updateDropdown(dropdown, nil, items, callback)
+		end
+		focused = true
+	end)
+
+	search.TextBox.FocusLost:Connect(function()
+		focused = false
+	end)
+
+	search.TextBox:GetPropertyChangedSignal("Text"):Connect(function()
+		if focused then
+			local sorted = utility:Sort(search.TextBox.Text, items)
+			sorted = #sorted ~= 0 and sorted
+			self:updateDropdown(dropdown, nil, sorted, callback)
+		end
+	end)
+
+	dropdown:GetPropertyChangedSignal("Size"):Connect(function()
+		self:Resize()
+	end)
+
+	return dropdown
+end
 	
 	
 	
