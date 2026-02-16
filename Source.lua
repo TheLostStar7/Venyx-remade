@@ -1751,7 +1751,9 @@ end
 	end
 	
 	function section:addDropdown(title, list, callback)
-	local dropdown = utility:Create("Frame", {
+	list = list or {}
+
+	local dropdownFrame = utility:Create("Frame", {
 		Name = "Dropdown",
 		Parent = self.container,
 		BackgroundTransparency = 1,
@@ -1785,7 +1787,7 @@ end
 				Text = title,
 				TextColor3 = themes.TextColor,
 				TextSize = 12,
-				TextTransparency = 0.10000000149012,
+				TextTransparency = 0.1,
 				TextXAlignment = Enum.TextXAlignment.Left
 			}),
 			utility:Create("ImageButton", {
@@ -1796,8 +1798,7 @@ end
 				Size = UDim2.new(0, 18, 0, 18),
 				ZIndex = 3,
 				Image = "rbxassetid://5012539403",
-				ImageColor3 = themes.TextColor,
-				SliceCenter = Rect.new(2, 2, 298, 298)
+				ImageColor3 = themes.TextColor
 			})
 		}),
 		utility:Create("ImageLabel", {
@@ -1818,8 +1819,7 @@ end
 				BorderSizePixel = 0,
 				Position = UDim2.new(0, 4, 0, 4),
 				Size = UDim2.new(1, -8, 1, -8),
-				CanvasPosition = Vector2.new(0, 28),
-				CanvasSize = UDim2.new(0, 0, 0, 120),
+				CanvasSize = UDim2.new(0, 0, 0, 0),
 				ZIndex = 2,
 				ScrollBarThickness = 3,
 				ScrollBarImageColor3 = themes.DarkContrast
@@ -1831,88 +1831,46 @@ end
 			})
 		})
 	})
-	
-	table.insert(self.modules, dropdown)
+
+	table.insert(self.modules, dropdownFrame)
 	self:Resize()
-	
-	local search = dropdown.Search
-	local focused
-	
-	list = list or {}
+
+	local object = {}
 	local items = {}
+
 	for _, v in ipairs(list) do
 		table.insert(items, v)
 	end
-	
-	function dropdown:Add(value)
+
+	function object:Add(value)
 		if not table.find(items, value) then
 			table.insert(items, value)
-			if search.Button.Rotation ~= 0 then
-				section:updateDropdown(dropdown, nil, items, callback)
-			end
 		end
 	end
-	
-	function dropdown:Remove(value)
-		local index = table.find(items, value)
-		if index then
-			table.remove(items, index)
-			if search.Button.Rotation ~= 0 then
-				section:updateDropdown(dropdown, nil, items, callback)
-			end
+
+	function object:Remove(value)
+		local i = table.find(items, value)
+		if i then
+			table.remove(items, i)
 		end
 	end
-	
-	function dropdown:Clear()
+
+	function object:Clear()
 		table.clear(items)
-		if search.Button.Rotation ~= 0 then
-			section:updateDropdown(dropdown, nil, items, callback)
-		end
 	end
-	
-	function dropdown:GetAll()
+
+	function object:GetAll()
 		local copy = {}
 		for i, v in ipairs(items) do
 			copy[i] = v
 		end
 		return copy
 	end
+
+	return object
+	end
 	
-	search.Button.MouseButton1Click:Connect(function()
-		if search.Button.Rotation == 0 then
-			section:updateDropdown(dropdown, nil, items, callback)
-		else
-			section:updateDropdown(dropdown, nil, nil, callback)
-		end
-	end)
 	
-	search.TextBox.Focused:Connect(function()
-		if search.Button.Rotation == 0 then
-			section:updateDropdown(dropdown, nil, items, callback)
-		end
-		
-		focused = true
-	end)
-	
-	search.TextBox.FocusLost:Connect(function()
-		focused = false
-	end)
-	
-	search.TextBox:GetPropertyChangedSignal("Text"):Connect(function()
-		if focused then
-			local sorted = utility:Sort(search.TextBox.Text, items)
-			sorted = #sorted ~= 0 and sorted
-			
-			section:updateDropdown(dropdown, nil, sorted, callback)
-		end
-	end)
-	
-	dropdown:GetPropertyChangedSignal("Size"):Connect(function()
-		self:Resize()
-	end)
-	
-	return dropdown
-end
 	
 	-- class functions
 	
