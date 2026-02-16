@@ -1859,7 +1859,8 @@ function section:addDropdown(title, list, callback)
 				Size = UDim2.new(0, 18, 0, 18),
 				ZIndex = 3,
 				Image = "rbxassetid://5012539403",
-				ImageColor3 = themes.TextColor
+				ImageColor3 = themes.TextColor,
+				SliceCenter = Rect.new(2, 2, 298, 298)
 			})
 		}),
 		utility:Create("ImageLabel", {
@@ -1880,7 +1881,8 @@ function section:addDropdown(title, list, callback)
 				BorderSizePixel = 0,
 				Position = UDim2.new(0, 4, 0, 4),
 				Size = UDim2.new(1, -8, 1, -8),
-				CanvasSize = UDim2.new(0, 0, 0, 0),
+				CanvasPosition = Vector2.new(0, 28),
+				CanvasSize = UDim2.new(0, 0, 0, 120),
 				ZIndex = 2,
 				ScrollBarThickness = 3,
 				ScrollBarImageColor3 = themes.DarkContrast
@@ -1896,44 +1898,43 @@ function section:addDropdown(title, list, callback)
 	table.insert(self.modules, dropdown)
 	self:Resize()
 
-	local items = {}
-	list = list or {}
-
-	for _, v in ipairs(list) do
-		table.insert(items, v)
-	end
-
-	function dropdown:Add(value)
-		if not table.find(items, value) then
-			table.insert(items, value)
-		end
-	end
-
-	function dropdown:Remove(value)
-		local i = table.find(items, value)
-		if i then
-			table.remove(items, i)
-		end
-	end
-
-	function dropdown:Clear()
-		table.clear(items)
-	end
-
-	function dropdown:GetAll()
-		local copy = {}
-		for i, v in ipairs(items) do
-			copy[i] = v
-		end
-		return copy
-	end
-
 	local search = dropdown.Search
 	local focused
 
+	list = list or {}
+
+	-- Add
+	function dropdown:Add(val)
+		if not table.find(list, val) then
+			table.insert(list, val)
+		end
+	end
+
+	-- Remove
+	function dropdown:Remove(val)
+		local idx = table.find(list, val)
+		if idx then
+			table.remove(list, idx)
+		end
+	end
+
+	-- Clear
+	function dropdown:Clear()
+		table.clear(list)
+	end
+
+	-- GetAll
+	function dropdown:GetAll()
+		local out = {}
+		for _, v in ipairs(list) do
+			out[#out+1] = v
+		end
+		return out
+	end
+
 	search.Button.MouseButton1Click:Connect(function()
 		if search.Button.Rotation == 0 then
-			self:updateDropdown(dropdown, nil, items, callback)
+			self:updateDropdown(dropdown, nil, list, callback)
 		else
 			self:updateDropdown(dropdown, nil, nil, callback)
 		end
@@ -1941,7 +1942,7 @@ function section:addDropdown(title, list, callback)
 
 	search.TextBox.Focused:Connect(function()
 		if search.Button.Rotation == 0 then
-			self:updateDropdown(dropdown, nil, items, callback)
+			self:updateDropdown(dropdown, nil, list, callback)
 		end
 		focused = true
 	end)
@@ -1952,9 +1953,9 @@ function section:addDropdown(title, list, callback)
 
 	search.TextBox:GetPropertyChangedSignal("Text"):Connect(function()
 		if focused then
-			local sorted = utility:Sort(search.TextBox.Text, items)
-			sorted = #sorted ~= 0 and sorted
-			self:updateDropdown(dropdown, nil, sorted, callback)
+			local filtered = utility:Sort(search.TextBox.Text, list)
+			filtered = #filtered ~= 0 and filtered
+			self:updateDropdown(dropdown, nil, filtered, callback)
 		end
 	end)
 
@@ -1964,6 +1965,7 @@ function section:addDropdown(title, list, callback)
 
 	return dropdown
 end
+
 	
 	
 	
